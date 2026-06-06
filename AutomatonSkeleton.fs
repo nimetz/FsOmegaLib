@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -70,6 +71,7 @@ module private AutomatonSkeleton =
         (stateStringer : 'T -> string)
         (accConditionStringer : 'T -> string)
         (sucStringer : 'G -> string)
+        (labelStringer : 'T -> string)
         (skeleton : AutomatonSkeleton<'T, 'L, 'G>)
         =
         skeleton.States
@@ -83,7 +85,7 @@ module private AutomatonSkeleton =
                 )
                 |> String.concat "\n"
 
-            "State: " + stateStringer s + " " + accConditionStringer s + "\n" + edgesStr
+            "State: " + stateStringer s + " \""  + labelStringer s + "\" "+ accConditionStringer s + "\n" + edgesStr
         )
         |> String.concat "\n"
 
@@ -208,13 +210,14 @@ module AlternatingAutomatonSkeleton =
     let printBodyInHanoiFormat
         (stateStringer : 'T -> string)
         (accConditionStringer : 'T -> string)
+        (labelStringer : 'T -> string)
         (skeleton : AlternatingAutomatonSkeleton<'T, 'L>)
         =
         let conjunctionStringer s =
             s |> Set.toList |> List.map stateStringer |> String.concat " & "
 
 
-        AutomatonSkeleton.printBodyInHanoiFormat stateStringer accConditionStringer conjunctionStringer skeleton
+        AutomatonSkeleton.printBodyInHanoiFormat stateStringer accConditionStringer conjunctionStringer labelStringer skeleton
 
     let findError (skeleton : AlternatingAutomatonSkeleton<'T, 'L>) =
         try
@@ -398,9 +401,10 @@ module NondeterministicAutomatonSkeleton =
     let printBodyInHanoiFormat
         (stateStringer : 'T -> string)
         (accConditionStringer : 'T -> string)
+        (labelStringer : 'T -> string)
         (skeleton : NondeterministicAutomatonSkeleton<'T, 'L>)
         =
-        AutomatonSkeleton.printBodyInHanoiFormat stateStringer accConditionStringer stateStringer skeleton
+        AutomatonSkeleton.printBodyInHanoiFormat stateStringer accConditionStringer stateStringer labelStringer skeleton
 
     let findError (skeleton : NondeterministicAutomatonSkeleton<'T, 'L>) =
         try

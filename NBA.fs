@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -67,7 +68,7 @@ type NBA<'T, 'L when 'T : comparison and 'L : comparison> =
             with NotWellFormedException msg ->
                 Some msg
 
-        member this.ToHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) =
+        member this.ToHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) (labelStringer : 'T -> string) =
             let stringWriter = new StringWriter()
 
             stringWriter.WriteLine("HOA: v1")
@@ -93,7 +94,7 @@ type NBA<'T, 'L when 'T : comparison and 'L : comparison> =
                 if this.AcceptingStates.Contains s then "{0}" else ""
 
             stringWriter.WriteLine(
-                NondeterministicAutomatonSkeleton.printBodyInHanoiFormat stateStringer accCondition this.Skeleton
+                NondeterministicAutomatonSkeleton.printBodyInHanoiFormat stateStringer accCondition labelStringer this.Skeleton
             )
 
             stringWriter.WriteLine "--END--"
@@ -150,8 +151,8 @@ module NBA =
             AcceptingStates = Set.empty
         }
 
-    let toHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) (nba : NBA<'T, 'L>) =
-        (nba :> AbstractAutomaton<'T, 'L>).ToHoaString stateStringer alphStringer
+    let toHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) (labelStringer : 'T -> string) (nba : NBA<'T, 'L>) =
+        (nba :> AbstractAutomaton<'T, 'L>).ToHoaString stateStringer alphStringer labelStringer
 
     let findError (nba : NBA<'T, 'L>) =
         (nba :> AbstractAutomaton<'T, 'L>).FindError()

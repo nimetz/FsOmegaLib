@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -102,6 +103,68 @@ module LTL =
             + " R "
             + printInSpotFormat varNames e2
             + ")"
+
+
+    let rec negativeNormalForm (formula : LTL<'T>) = 
+        match formula with
+        | Atom _ -> formula
+        | True -> formula
+        | False -> formula
+        | And(e1, e2) -> 
+            And (negativeNormalForm e1, negativeNormalForm e2)
+        | Implies(e1, e2) ->
+            Or (negativeNormalForm (Not e1), negativeNormalForm e2)
+        | Equiv(e1, e2) ->
+            negativeNormalForm (Or (And (Not e1, Not e2), And (e1, e2)))
+        | Xor(e1, e2) -> 
+            negativeNormalForm (Or (And ((Not e1), e2),  (And(e1, Not (e2)))))
+        | Or(e1, e2) -> 
+            Or (negativeNormalForm e1, negativeNormalForm e2)
+        | U(e1, e2) -> 
+            U(negativeNormalForm e1, negativeNormalForm e2)
+        | W(e1, e2) ->
+            W (negativeNormalForm e1, negativeNormalForm e2)
+        | M(e1, e2) ->
+            M (negativeNormalForm e1, negativeNormalForm e2)
+        | R(e1, e2) -> 
+            R (negativeNormalForm e1, negativeNormalForm e2)
+        | F e ->
+            F (negativeNormalForm e)
+        | G e->
+            G (negativeNormalForm e)
+        | X e ->
+            X (negativeNormalForm e)
+        | Not e -> 
+            match e with
+            | Atom _ -> formula
+            | True -> False
+            | False -> True
+            | And(e1, e2) -> 
+                negativeNormalForm (Or (Not e1, Not e2))
+            | Implies(e1, e2) ->
+                negativeNormalForm (And(e1, Not e2))
+            | Equiv(e1, e2) ->
+                negativeNormalForm (Or (And (Not e1, e2), And(e1, Not e2)))
+            | Xor(e1, e2) ->
+                negativeNormalForm (Or (And (Not e1, Not e2), And(e1, e2)))
+            | Or(e1, e2) ->
+                negativeNormalForm (And (Not e1, Not e2))
+            | U(e1, e2) ->
+                negativeNormalForm (R (Not e1, Not e2))
+            | W(e1, e2) ->
+                negativeNormalForm (M (Not e1, Not e2))
+            | M(e1, e2)-> 
+                negativeNormalForm (W (Not e1, Not e2))
+            | R(e1, e2) -> 
+                negativeNormalForm (U (Not e1, Not e2))
+            | F e ->
+                negativeNormalForm (G (Not e))
+            | G e ->
+                negativeNormalForm (F (Not e))
+            | X e ->
+                negativeNormalForm (X (Not e))
+            | Not e -> negativeNormalForm e
+
 
     let rec map (f : 'T -> 'U) (formula : LTL<'T>) =
         match formula with
@@ -233,7 +296,9 @@ module Parser =
             oppLtl.TermParser <- basicParser
 
             addInfixOperator "&" 5 Associativity.Left (fun x y -> And(x, y))
+            addInfixOperator "&&" 5 Associativity.Left (fun x y -> And(x, y))
             addInfixOperator "|" 4 Associativity.Left (fun x y -> Or(x, y))
+            addInfixOperator "||" 4 Associativity.Left (fun x y -> Or(x, y))
             addInfixOperator "->" 3 Associativity.Left (fun x y -> Implies(x, y))
             addInfixOperator "<->" 2 Associativity.None (fun x y -> Equiv(x, y))
             addInfixOperator "xor" 2 Associativity.None (fun x y -> Xor(x, y))

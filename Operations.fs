@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -30,6 +31,9 @@ open NPA
 open NSA
 open APA
 open LTL
+open ABA
+open ARA
+open ASA
 
 type FsOmegaLibError =
     {
@@ -301,6 +305,78 @@ module private HoaConversion =
             InitialStates = hoaAut.Header.Start |> List.map set |> set
             Color = body.StateMap |> Map.map (fun _ x -> x |> fst |> Set.toList |> List.head)
         }
+    
+    let convertHoaToABA (hoaAut : HoaAutomaton) =
+
+        let body = hoaAut.Body
+        
+        if hoaAut.Header.Acceptance <> (1, AccAtomInf(PosAcceptanceSet 0)) then
+            raise
+            <| ConversionException
+                {
+                    Info = $"Could not convert HANOI automaton to NBA"
+                    DebugInfo =
+                        $"Could not convert HANOI automaton to NBA; No valid Acceptance condition for a NBA: %A{hoaAut.Header.Acceptance}"
+                }
+            
+        {
+            ABA.Skeleton = extractAlternatingSkeletonFromHoa hoaAut
+            ABA.InitialStates = hoaAut.Header.Start |> List.map set |> set
+            ABA.AcceptingStates =
+                body.StateMap
+                |> Map.toSeq
+                |> Seq.filter (fun (_, (a, _)) -> Set.contains 0 a)
+                |> Seq.map fst
+                |> set
+        }
+
+    let convertHoaToARA (hoaAut : HoaAutomaton) =
+
+        let body = hoaAut.Body
+        
+        if hoaAut.Header.Acceptance <> (1, AccAtomInf(PosAcceptanceSet 0)) then
+            raise
+            <| ConversionException
+                {
+                    Info = $"Could not convert HANOI automaton to NBA"
+                    DebugInfo =
+                        $"Could not convert HANOI automaton to NBA; No valid Acceptance condition for a NBA: %A{hoaAut.Header.Acceptance}"
+                }
+            
+        {
+            ARA.Skeleton = extractAlternatingSkeletonFromHoa hoaAut
+            ARA.InitialStates = hoaAut.Header.Start |> List.map set |> set
+            ARA.AcceptingStates =
+                body.StateMap
+                |> Map.toSeq
+                |> Seq.filter (fun (_, (a, _)) -> Set.contains 0 a)
+                |> Seq.map fst
+                |> set
+        }
+
+    let convertHoaToASA (hoaAut : HoaAutomaton) =
+
+        let body = hoaAut.Body
+        
+        if hoaAut.Header.Acceptance <> (1, AccAtomInf(PosAcceptanceSet 0)) then
+            raise
+            <| ConversionException
+                {
+                    Info = $"Could not convert HANOI automaton to ASA"
+                    DebugInfo =
+                        $"Could not convert HANOI automaton to ASA; No valid Acceptance condition for a ASA: %A{hoaAut.Header.Acceptance}"
+                }
+            
+        {
+            ASA.Skeleton = extractAlternatingSkeletonFromHoa hoaAut
+            ASA.InitialStates = hoaAut.Header.Start |> List.map set |> set
+            ASA.AcceptingStates =
+                body.StateMap
+                |> Map.toSeq
+                |> Seq.filter (fun (_, (a, _)) -> Set.contains 0 a)
+                |> Seq.map fst
+                |> set
+        }
 
     let resultToGNBA (res : string) =
         match HOA.Parser.parseHoaAutomaton res with
@@ -367,6 +443,39 @@ module private HoaConversion =
                     Info = $"Could not parse HANOI automaton"
                     DebugInfo = $"Could not parse HANOI automaton into APA: %s{err}"
                 }
+    
+    let resultToABA (res: string) =
+        match HOA.Parser.parseHoaAutomaton res with
+        | Ok hoa -> convertHoaToABA hoa
+        | Error err ->
+            raise
+            <| ConversionException
+                {
+                    Info = $"Could not parse HANOI automaton"
+                    DebugInfo = $"Could not parse HANOI automaton into ABA: %s{err}"
+                }
+
+    let resultToARA (res: string) =
+        match HOA.Parser.parseHoaAutomaton res with
+        | Ok hoa -> convertHoaToARA hoa
+        | Error err ->
+            raise
+            <| ConversionException
+                {
+                    Info = $"Could not parse HANOI automaton"
+                    DebugInfo = $"Could not parse HANOI automaton into ARA: %s{err}"
+                }
+    
+    let resultToASA (res: string) =
+        match HOA.Parser.parseHoaAutomaton res with
+        | Ok hoa -> convertHoaToASA hoa
+        | Error err ->
+            raise
+            <| ConversionException
+                {
+                    Info = $"Could not parse HANOI automaton"
+                    DebugInfo = $"Could not parse HANOI automaton into ASA: %s{err}"
+                }
 
 
 module AutomataUtil =
@@ -392,6 +501,7 @@ module AutomataUtil =
             | { ExitCode = 0; Stderr = "" } -> File.ReadAllText(targetPath) |> outputputParser |> Success
             | { ExitCode = exitCode; Stderr = stderr } ->
                 if exitCode <> 0 then
+                    printfn $"Exit code: %i{exitCode}"
                     raise
                     <| ConversionException
                         {
@@ -476,7 +586,7 @@ module AutomataUtil =
             |> List.unzip
             |> fun (x, y) -> Map.ofList x, Map.ofList y
 
-        let s = aut.ToHoaString string (fun x -> dict.[x])
+        let s = aut.ToHoaString string (fun x -> dict.[x]) string
 
         s, revDict
 
@@ -490,8 +600,8 @@ module AutomataUtil =
             |> List.unzip
             |> fun (x, y) -> Map.ofList x, Map.ofList y
 
-        let s1 = aut1.ToHoaString string (fun x -> dict.[x])
-        let s2 = aut2.ToHoaString string (fun x -> dict.[x])
+        let s1 = aut1.ToHoaString string (fun x -> dict.[x]) string
+        let s2 = aut2.ToHoaString string (fun x -> dict.[x]) string
 
         s1, s2, revDict
 
@@ -532,6 +642,64 @@ module AutomataUtil =
             c |> HoaConversion.resultToNBA |> NBA.mapAPs apRemapping
 
         operateHoaAndParse debug intermediateFilesPath autfiltPath args hoaOutputputParser hoaString
+
+    let operateHoaToABA
+        (debug : bool)
+        (intermediateFilesPath : string)
+        (autfiltPath : string)
+        (operations : list<string>)
+        (ef : Effort)
+        (apRemapping : string -> 'L)
+        (hoaString : string)
+        =
+
+        let args =
+            [ "--" + Effort.asString ef ; "-a"] @ operations
+            |> String.concat " "
+
+        let hoaOutputputParser c =
+            c |> HoaConversion.resultToABA |> ABA.mapAPs apRemapping
+
+        operateHoaAndParse debug intermediateFilesPath autfiltPath args hoaOutputputParser hoaString
+
+    let operateHoaToARA
+        (debug : bool)
+        (intermediateFilesPath : string)
+        (autfiltPath : string)
+        (operations : list<string>)
+        (ef : Effort)
+        (apRemapping : string -> 'L)
+        (hoaString : string)
+        =
+
+        let args =
+            [ "--" + Effort.asString ef ; "-a"] @ operations
+            |> String.concat " "
+
+        let hoaOutputputParser c =
+            c |> HoaConversion.resultToARA |> ARA.mapAPs apRemapping
+
+        operateHoaAndParse debug intermediateFilesPath autfiltPath args hoaOutputputParser hoaString
+
+    let operateHoaToASA
+        (debug : bool)
+        (intermediateFilesPath : string)
+        (autfiltPath : string)
+        (operations : list<string>)
+        (ef : Effort)
+        (apRemapping : string -> 'L)
+        (hoaString : string)
+        =
+
+        let args =
+            [ "--" + Effort.asString ef ; "-a"] @ operations
+            |> String.concat " "
+
+        let hoaOutputputParser c =
+            c |> HoaConversion.resultToASA |> ASA.mapAPs apRemapping
+
+        operateHoaAndParse debug intermediateFilesPath autfiltPath args hoaOutputputParser hoaString
+
 
     let operateHoaToDPA
         (debug : bool)
@@ -589,6 +757,9 @@ module AutomataUtil =
             c |> HoaConversion.resultToNSA |> NSA.mapAPs apRemapping
 
         operateHoaAndParse debug intermediateFilesPath autfiltPath args hoaOutputputParser hoaString
+    
+    let parseABAString (hoaString : string) =
+        HoaConversion.resultToABA hoaString
 
 
     // ==================== Operate on pairs of automata ====================
@@ -680,6 +851,38 @@ module AutomatonFromHoaString =
         =
 
         AutomataUtil.operateHoaToNBA debug intermediateFilesPath autfiltPath [] ef id hoaString
+
+
+    let convertHoaStringToABA 
+        (debug : bool)
+        (intermediateFilesPath : string)
+        (autfiltPath : string)
+        (ef : Effort)
+        (hoaString : string)
+        =
+
+        AutomataUtil.operateHoaToABA debug intermediateFilesPath autfiltPath [] ef id hoaString
+
+    let convertHoaStringToARA 
+        (debug : bool)
+        (intermediateFilesPath : string)
+        (autfiltPath : string)
+        (ef : Effort)
+        (hoaString : string)
+        =
+
+        AutomataUtil.operateHoaToARA debug intermediateFilesPath autfiltPath [] ef id hoaString
+
+    let convertHoaStringToASA 
+        (debug : bool)
+        (intermediateFilesPath : string)
+        (autfiltPath : string)
+        (ef : Effort)
+        (hoaString : string)
+        =
+
+        AutomataUtil.operateHoaToASA debug intermediateFilesPath autfiltPath [] ef id hoaString
+
 
     let convertHoaStringToDPA
         (debug : bool)

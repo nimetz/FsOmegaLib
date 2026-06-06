@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -70,7 +71,7 @@ type APA<'T, 'L when 'T : comparison and 'L : comparison> =
             with NotWellFormedException msg ->
                 Some msg
 
-        member this.ToHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) =
+        member this.ToHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) (labelStringer : 'T -> string)=
             let stringWriter = new StringWriter()
 
             stringWriter.WriteLine("HOA: v1")
@@ -107,7 +108,7 @@ type APA<'T, 'L when 'T : comparison and 'L : comparison> =
             let accCondition s = "{" + string this.Color.[s] + "}"
 
             stringWriter.WriteLine(
-                AlternatingAutomatonSkeleton.printBodyInHanoiFormat stateStringer accCondition this.Skeleton
+                AlternatingAutomatonSkeleton.printBodyInHanoiFormat stateStringer accCondition labelStringer this.Skeleton
             )
 
             stringWriter.WriteLine "--END--"
@@ -178,8 +179,8 @@ module APA =
             Color = [ (0, 1) ] |> Map.ofList
         }
 
-    let toHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) (apa : APA<'T, 'L>) =
-        (apa :> AbstractAutomaton<'T, 'L>).ToHoaString stateStringer alphStringer
+    let toHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) (labelStringer : 'T -> string)(apa : APA<'T, 'L>) =
+        (apa :> AbstractAutomaton<'T, 'L>).ToHoaString stateStringer alphStringer labelStringer
 
     let findError (apa : APA<'T, 'L>) =
         (apa :> AbstractAutomaton<'T, 'L>).FindError()

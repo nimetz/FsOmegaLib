@@ -17,6 +17,10 @@
     <Compile Include="DPA.fs" />
     <Compile Include="NSA.fs" />
     <Compile Include="NPA.fs" />
+    <Compile Include="ARA.fs" />
+    <Compile Include="ASA.fs" />
+    <Compile Include="ACA.fs" />
+    <Compile Include="ABA.fs" />
     <Compile Include="APA.fs" />
     <Compile Include="LTL.fs" />
     <Compile Include="Operations.fs" />

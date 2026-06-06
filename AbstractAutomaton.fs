@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -21,6 +22,6 @@ open System
 open AutomatonSkeleton
 
 type AbstractAutomaton<'T, 'L when 'T : comparison and 'L : comparison> =
-    abstract member ToHoaString : stateToString : ('T -> string) -> apToString : ('L -> string) -> string
+    abstract member ToHoaString : stateToString : ('T -> string) -> apToString : ('L -> string) -> stateToLabel : ('T -> string) -> string
     abstract member FindError : unit -> Option<string>
     abstract member Skeleton : AlternatingAutomatonSkeleton<'T, 'L>

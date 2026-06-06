@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -264,6 +265,15 @@ module BooleanExpression =
         | Neg c -> Neg(fixValues m c)
         | And l -> l |> List.map (fun x -> fixValues m x) |> And
         | Or l -> l |> List.map (fun (x : BooleanExpression<'T>) -> fixValues m x) |> Or
+
+    let rec dualizeBooleanExpression (b : BooleanExpression<'T>) =
+        match b with
+        | Atom x -> Atom x
+        | True -> True
+        | False -> False
+        | Neg c -> Neg (dualizeBooleanExpression c)
+        | And l -> l |> List.map (fun x -> dualizeBooleanExpression x) |> Or
+        | Or l -> l |> List.map (fun (x : BooleanExpression<'T>) -> dualizeBooleanExpression x) |> And
 
 let convertBooleanExpressionToDNF (e : BooleanExpression<'T>) : DNF<'T> =
     let rec recursiveConverter e =

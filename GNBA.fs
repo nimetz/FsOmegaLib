@@ -1,4 +1,5 @@
 (*    
+    Copyright (C) 2025-2026 Niklas Metzger
     Copyright (C) 2022-2024 Raven Beutner
 
     This program is free software: you can redistribute it and/or modify
@@ -76,7 +77,7 @@ type GNBA<'T, 'L when 'T : comparison and 'L : comparison> =
                 Some msg
 
 
-        member this.ToHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) =
+        member this.ToHoaString (stateStringer : 'T -> string) (alphStringer : 'L -> string) (labelStringer : 'T -> string) =
             let stringWriter = new StringWriter()
 
             stringWriter.WriteLine("HOA: v1")
@@ -116,7 +117,7 @@ type GNBA<'T, 'L when 'T : comparison and 'L : comparison> =
                     "{" + (accSets |> Seq.toList |> List.map string |> String.concat " ") + "}"
 
             stringWriter.WriteLine(
-                NondeterministicAutomatonSkeleton.printBodyInHanoiFormat stateStringer accCondition this.Skeleton
+                NondeterministicAutomatonSkeleton.printBodyInHanoiFormat stateStringer accCondition labelStringer this.Skeleton
             )
 
             stringWriter.WriteLine "--END--"
