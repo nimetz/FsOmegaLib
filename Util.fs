@@ -19,6 +19,13 @@ module internal FsOmegaLib.Util
 
 open System
 
+let rec combineStringsWithSeperator (s: String) (l: list<String>) = 
+    match l with 
+    | [] -> ""
+    | [x] -> x
+    | x::y::xs -> 
+        x + s + combineStringsWithSeperator s (y::xs)
+
 let rec cartesianProduct (LL : list<seq<'a>>) =
     match LL with
     | [] -> Seq.singleton []

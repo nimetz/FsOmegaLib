@@ -18,6 +18,7 @@
 
 module FsOmegaLib.Operations
 
+open System
 open System.IO
 
 open Util.SubprocessUtil
@@ -477,6 +478,117 @@ module private HoaConversion =
                     DebugInfo = $"Could not parse HANOI automaton into ASA: %s{err}"
                 }
 
+module AutomatonFromString = 
+    let convertHoaStringToGNBA (debug : bool) (intermediateFilesPath : String) (autfiltPath : String) (ef : Effort) (autString : String) = 
+        try 
+            let path = Path.Combine [|intermediateFilesPath; "/tmp/aut1.hoa"|]
+            let targetPath = Path.Combine [|intermediateFilesPath; "/tmp/autRes.hoa"|]
+        
+            File.WriteAllText(path, autString)
+
+            let arg = "--small --" + Effort.asString ef + " -S --gba " + path + " -o " + targetPath
+
+            let res = Util.SubprocessUtil.executeSubprocess Map.empty autfiltPath arg
+
+            match res with 
+            | {ExitCode = 0; Stderr = ""} -> 
+                let c = File.ReadAllText(targetPath)
+                HoaConversion.resultToGNBA c
+                |> Success
+            | {ExitCode = exitCode; Stderr = stderr}  -> 
+                if exitCode <> 0 then 
+                    raise <| ConversionException {Info = $"Unexpected exit code by spot"; DebugInfo = $"Unexpected exit code by spot;  (convert, GNBA, string); %i{exitCode}"}
+                else   
+                    raise <| ConversionException {Info = $"Error by spot"; DebugInfo = $"Error by spot; (convert, GNBA, string); %s{stderr}"}
+
+        with 
+        | _ when debug -> reraise() 
+        | ConversionException err -> 
+            Fail (err)
+        | e -> 
+            Fail {Info = $"Unexpected error"; DebugInfo = $"Unexpected error; (convert, GNBA, string); %s{e.Message}"}
+
+    let convertHoaStringToNBA (debug: bool) (intermediateFilesPath : String) (autfiltPath : String) (ef : Effort) (autString : String) = 
+        try
+            let path = Path.Combine [|intermediateFilesPath; "/tmp/aut1.hoa"|]
+            let targetPath = Path.Combine [|intermediateFilesPath; "/tmp/autRes.hoa"|]
+
+            File.WriteAllText(path, autString)
+
+            let arg = "--small --" + Effort.asString ef + " -S -B " + path + " -o " + targetPath
+
+            let res = Util.SubprocessUtil.executeSubprocess Map.empty autfiltPath arg
+
+            match res with 
+            | {ExitCode = 0; Stderr = ""} -> 
+                let c = File.ReadAllText(targetPath)
+                HoaConversion.resultToNBA c 
+                |> Success
+            | {ExitCode = exitCode; Stderr = stderr}  -> 
+                if exitCode <> 0 then 
+                    raise <| ConversionException {Info = $"Unexpected exit code by spot"; DebugInfo = $"Unexpected exit code by spot;  (convert, NBA, string); %i{exitCode}"}
+                else   
+                    raise <| ConversionException {Info = $"Error by spot"; DebugInfo = $"Error by spot; (convert, NBA, string); %s{stderr}"}
+        with 
+        | _ when debug -> reraise() 
+        | ConversionException err -> 
+            Fail (err)
+        | e -> 
+            Fail {Info = $"Unexpected error"; DebugInfo = $"Unexpected error; (convert, NBA, string); %s{e.Message}"}
+
+    let convertHoaStringToDPA (debug: bool) (intermediateFilesPath : String) (autfiltPath : String) (ef : Effort) (autString : String) = 
+        try 
+            let path = Path.Combine [|intermediateFilesPath; "/tmp/aut1.hoa"|]
+            let targetPath = Path.Combine [|intermediateFilesPath; "/tmp/autRes.hoa"|]
+
+            File.WriteAllText(path, autString)
+
+            let arg = "--small --" + Effort.asString ef + " -D -C -S -p\"max even\" " + path + " -o " + targetPath
+            let res = Util.SubprocessUtil.executeSubprocess Map.empty autfiltPath arg
+
+            match res with 
+            | {ExitCode = 0; Stderr = ""} -> 
+                let c = File.ReadAllText(targetPath)
+                HoaConversion.resultToDPA c 
+                |> Success
+            | {ExitCode = exitCode; Stderr = stderr}  -> 
+                if exitCode <> 0 then 
+                    raise <| ConversionException {Info = $"Unexpected exit code by spot"; DebugInfo = $"Unexpected exit code by spot;  (convert, DPA, string); %i{exitCode}"}
+                else   
+                    raise <| ConversionException {Info = $"Error by spot"; DebugInfo = $"Error by spot; (convert, DPA, string); %s{stderr}"}
+        with
+        | _ when debug -> reraise() 
+        | ConversionException err -> 
+            Fail (err)
+        | e -> 
+            Fail {Info = $"Unexpected error"; DebugInfo = $"Unexpected error; (convert, DPA, string); %s{e.Message}"}
+
+    let convertHoaStringToAPA (debug: bool) (intermediateFilesPath : String) (autfiltPath : String) (ef : Effort) (autString : String) = 
+        try 
+            let path = Path.Combine [|intermediateFilesPath; "/tmp/aut1.hoa"|]
+            let targetPath = Path.Combine [|intermediateFilesPath; "/tmp/autRes.hoa"|]
+
+            File.WriteAllText(path, autString)
+
+            let arg = "--small --" + Effort.asString ef + " -D -C -S -p\"max even\" " + path + " -o " + targetPath
+            let res = Util.SubprocessUtil.executeSubprocess Map.empty autfiltPath arg
+
+            match res with 
+            | {ExitCode = 0; Stderr = ""} -> 
+                let c = File.ReadAllText(targetPath)
+                HoaConversion.resultToAPA c 
+                |> Success
+            | {ExitCode = exitCode; Stderr = stderr}  -> 
+                if exitCode <> 0 then 
+                    raise <| ConversionException {Info = $"Unexpected exit code by spot"; DebugInfo = $"Unexpected exit code by spot;  (convert, DPA, string); %i{exitCode}"}
+                else   
+                    raise <| ConversionException {Info = $"Error by spot"; DebugInfo = $"Error by spot; (convert, DPA, string); %s{stderr}"}
+        with
+        | _ when debug -> reraise() 
+        | ConversionException err -> 
+            Fail (err)
+        | e -> 
+            Fail {Info = $"Unexpected error"; DebugInfo = $"Unexpected error; (convert, DPA, string); %s{e.Message}"}
 
 module AutomataUtil =
     let operateHoaAndParse
